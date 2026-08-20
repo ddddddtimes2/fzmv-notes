@@ -1,0 +1,23 @@
+// Keep the desktop navigation compact; mobile navigation remains full-width.
+$nav-width: 13rem;
+$nav-width-md: 13rem;
+
+.side-bar {
+  min-width: 13rem;
+  max-width: 13rem;
+  margin-left: 3rem;
+  margin-right: 0;
+}
+
+.side-bar + .main {
+  @include mq(md) {
+    margin-left: 16rem;
+    max-width: none;
+  }
+}
+
+.main-content {
+  min-width: 800px;
+  max-width: none;
+  margin: 1em 1em 1em 0;
+}
