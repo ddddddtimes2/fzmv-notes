@@ -111,8 +111,8 @@ typedef struct {
 } ShipRacePlayerSpriteMetadata;
 
 typedef struct {
-    u16 unk_00;
-    u16 unk_02;
+    u16 vramOffset_pow2;
+    u16 frameSize_pow2;
     u8* spritesheet;
 } ShipRaceNPCSpriteMetadata;
 
@@ -120,10 +120,9 @@ typedef struct {
     ShipRacePlayerSpriteMetadata[11]* playerSpriteData;
     ShipRaceNPCSpriteMetadata* npcSpriteData;
     s8[4][2] playerSpriteFlameCoords;
-    u8 unk_10;
-    u8 unk_11;
+    s8 playerSpriteHardTurnSparkCoordOffsets[2];
     u8 playerSpriteAmountOfFlames;
-    u8 unk_13;
+    s8 spriteVerticalOffset;
 } ShipRaceSpritesMetadata;
 ```
 
@@ -140,15 +139,14 @@ of both kinds are stored consecutively for each machine. Backmarker/NPC ships on
 
 A 15-element array of `ShipRaceSpritesMetadata` is stored at `0x082C2170`. Indices `0x00-0x0C` are ordered by `ShipID`.
 
-| Offset | Type                              | Name                       | Status    | Description                                                                                                                                                                |
-|--------|-----------------------------------|----------------------------|-----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| +0x00  | ShipRacePlayerSpriteMetadata[11]* | playerSpriteData           | Confirmed | Pointer to an array of 11 `ShipRacePlayerSpriteMetadata` structs, one for each frame.                                                                                      |
-| +0x04  | ShipRaceNPCSpriteMetadata*        | npcSpriteData              | Confirmed |                                                                                                                                                                            |
-| +0x08  | s8[4][2]                          | playerSpriteFlameCoords    | Confirmed | A 4-element array of (x,y) coordinates. Each point is the coordinates of a flame that will be drawn in one of the ship's exhaust tubes. (0,0) is used for unused elements. |
-| +0x10  | u8                                | unk_10                     | Unknown   | ??                                                                                                                                                                         |
-| +0x11  | u8                                | unk_11                     | Unknown   | ??                                                                                                                                                                         |
-| +0x12  | u8                                | playerSpriteAmountOfFlames | Confirmed | Amount of flames to depict in the ship's player sprite. Capped to a maximum of 4.                                                                                          |
-| +0x13  | u8                                | unk_13                     | Unknown   | ??                                                                                                                                                                         |
+| Offset | Type                              | Name                                  | Status    | Description                                                                                                                                                                |
+|--------|-----------------------------------|---------------------------------------|-----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| +0x00  | ShipRacePlayerSpriteMetadata[11]* | playerSpriteData                      | Confirmed | Pointer to an array of 11 `ShipRacePlayerSpriteMetadata` structs, one for each frame.                                                                                      |
+| +0x04  | ShipRaceNPCSpriteMetadata*        | npcSpriteData                         | Confirmed |                                                                                                                                                                            |
+| +0x08  | s8[4][2]                          | playerSpriteFlameCoords               | Confirmed | A 4-element array of (x,y) coordinates. Each point is the coordinates of a flame that will be drawn in one of the ship's exhaust tubes. (0,0) is used for unused elements. |
+| +0x10  | s8[2]                             | playerSpriteHardTurnSparkCoordOffsets | Confirmed | (x,y) offsets of the spark sprites that appear on the ship's player sprite when making a hard turn.                                                                        |
+| +0x12  | u8                                | playerSpriteAmountOfFlames            | Confirmed | Amount of flames to depict in the ship's player sprite. Capped to a maximum of 4.                                                                                          |
+| +0x13  | s8                                | spriteVerticalOffset                  | Confirmed | Vertical offset for the sprites. Applies to both player and NPC sprites.                                                                                                   |
 
 - **TODO** The Y coordinate at which the ship's player sprite is drawn may be stored in one of the unknown values here.
 - **TODO** I can't remember where the palettes for all of these sprites are stored
@@ -177,3 +175,11 @@ Output 2 empty chunks
 Each byte actually represents an amount of 32-bit integers to read. (0x10 equals 16 u32 values to read equals an 8x8px
 8bpp chunk). The RLE doesn't mix the encodings of two different image rows, and the values for the RLE of a row must
 add up to `0x60`.
+
+### NPC sprites
+
+| Offset | Type | Name            | Status        | Description                                                                                                                                                                                          |
+|--------|------|-----------------|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| +0x00  | u16  | vramOffset_pow2 | Needs testing | Appears to be an offset to the VRAM position the data is loaded at. Used like `vramDest = 0x06100000 + (1 << vramOffset_pow2)`. Capped at `0x06100000` (start of OBJ VRAM). Probably needs to be 6.  |
+| +0x02  | u16  | frameSize_pow2  | Needs testing | Appears to determine the amount of bytes to read from the spritesheet to display a certain frame. Also determines the element size. Used like `size = 1 << frameSize_pow2`. Probably needs to be 10. |
+| +0x04  | u8*  | spritesheet     | Confirmed     | Pointer to the ship's spritesheet image.                                                                                                                                                             |
